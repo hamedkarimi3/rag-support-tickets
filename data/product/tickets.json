@@ -1,0 +1,41 @@
+[
+  {
+    "Ticket ID": "P001",
+    "Subject": "Dashboard not loading correctly",
+    "Body": "The main dashboard takes too long to load and sometimes shows blank screen.",
+    "Answer": "Clear browser cache, check internet speed, and ensure you are using a supported browser version.",
+    "Type": "Product",
+    "Queue": "Product Support",
+    "Priority": "High",
+    "Language": "English",
+    "tag_1": "dashboard",
+    "tag_2": "performance",
+    "tag_3": "loading"
+  },
+  {
+    "Ticket ID": "P002",
+    "Subject": "Export to PDF not working",
+    "Body": "When user clicks export to PDF button nothing happens. No error message shown.",
+    "Answer": "Disable popup blocker in browser settings. Allow downloads from the application domain.",
+    "Type": "Product",
+    "Queue": "Product Support",
+    "Priority": "Medium",
+    "Language": "English",
+    "tag_1": "export",
+    "tag_2": "pdf",
+    "tag_3": "download"
+  },
+  {
+    "Ticket ID": "P003",
+    "Subject": "Search filter not returning correct results",
+    "Body": "Search filter by date range returns wrong results or no results at all.",
+    "Answer": "Check date format settings in user preferences. Ensure timezone is set correctly.",
+    "Type": "Product",
+    "Queue": "Product Support",
+    "Priority": "Low",
+    "Language": "English",
+    "tag_1": "search",
+    "tag_2": "filter",
+    "tag_3": "date"
+  }
+]

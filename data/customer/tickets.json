@@ -1,0 +1,41 @@
+[
+  {
+    "Ticket ID": "C001",
+    "Subject": "Cannot access my account after password reset",
+    "Body": "Customer reset their password but still cannot login. Getting invalid credentials error.",
+    "Answer": "Verify email address is correct. Check spam folder for reset email. Try resetting password again and wait 5 minutes before logging in.",
+    "Type": "Customer",
+    "Queue": "Customer Support",
+    "Priority": "High",
+    "Language": "English",
+    "tag_1": "account",
+    "tag_2": "password",
+    "tag_3": "login"
+  },
+  {
+    "Ticket ID": "C002",
+    "Subject": "Charged twice for same order",
+    "Body": "Customer was charged twice for the same order. Wants refund for duplicate charge.",
+    "Answer": "Verify duplicate charge in payment system. Process refund for duplicate transaction. Send confirmation email to customer.",
+    "Type": "Customer",
+    "Queue": "Customer Support",
+    "Priority": "High",
+    "Language": "English",
+    "tag_1": "billing",
+    "tag_2": "refund",
+    "tag_3": "payment"
+  },
+  {
+    "Ticket ID": "C003",
+    "Subject": "How to upgrade my subscription plan",
+    "Body": "Customer wants to know how to upgrade from basic to premium plan and what the price difference is.",
+    "Answer": "Go to Account Settings, click Subscription, select Premium plan and follow the upgrade steps. Price difference is charged immediately on a prorated basis.",
+    "Type": "Customer",
+    "Queue": "Customer Support",
+    "Priority": "Low",
+    "Language": "English",
+    "tag_1": "subscription",
+    "tag_2": "upgrade",
+    "tag_3": "billing"
+  }
+]

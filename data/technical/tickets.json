@@ -1,0 +1,41 @@
+[
+  {
+    "Ticket ID": "T001",
+    "Subject": "Cannot connect to VPN",
+    "Body": "User is unable to connect to the company VPN from home. Error message: connection timeout.",
+    "Answer": "Check firewall settings and ensure VPN client is updated to latest version. Try reinstalling the VPN client.",
+    "Type": "Technical",
+    "Queue": "IT Support",
+    "Priority": "High",
+    "Language": "English",
+    "tag_1": "vpn",
+    "tag_2": "network",
+    "tag_3": "connectivity"
+  },
+  {
+    "Ticket ID": "T002",
+    "Subject": "Login error on Chrome browser",
+    "Body": "User gets error 403 when trying to login using Chrome. Works fine on Firefox.",
+    "Answer": "Clear Chrome cache and cookies. Disable browser extensions. Try incognito mode.",
+    "Type": "Technical",
+    "Queue": "IT Support",
+    "Priority": "Medium",
+    "Language": "English",
+    "tag_1": "login",
+    "tag_2": "chrome",
+    "tag_3": "browser"
+  },
+  {
+    "Ticket ID": "T003",
+    "Subject": "Outlook not syncing emails",
+    "Body": "Emails are not syncing in Outlook. Last sync was 2 days ago.",
+    "Answer": "Repair the Outlook profile, check internet connection, and ensure mailbox is not full.",
+    "Type": "Technical",
+    "Queue": "IT Support",
+    "Priority": "Medium",
+    "Language": "English",
+    "tag_1": "outlook",
+    "tag_2": "email",
+    "tag_3": "sync"
+  }
+]
