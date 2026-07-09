@@ -1,0 +1,9 @@
+chromadb==0.5.0          # vector database — stores ticket embeddings
+langchain==0.3.0         # framework that connects AI components together
+langchain-openai==0.2.0  # LangChain's connector to OpenAI
+langchain-community==0.3.0  # extra LangChain loaders and tools
+langchain-core==0.3.0    # core LangChain interfaces
+openai==1.50.0           # OpenAI API — GPT-4o and embeddings
+streamlit==1.39.0        # builds the web UI with pure Python
+python-dotenv==1.0.0     # reads API keys from .env file safely
+jq==1.8.0                # JSON query tool for processing JSON files

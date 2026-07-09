@@ -1,0 +1,17 @@
+# Virtual environment
+.venv/
+venv/
+
+# API keys
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# ChromaDB data
+vector_store/
+
+# VSCode
+.vscode/
