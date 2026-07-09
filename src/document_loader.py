@@ -1,3 +1,32 @@
+"""
+document_loader.py — Support Ticket Loader
+===========================================
+
+HOW IT WORKS:
+1. Reads ticket files from the data folder
+2. Converts each ticket into a LangChain Document object
+3. Each Document has two parts:
+   - page_content: the text that gets embedded (Subject, Description, Resolution...)
+   - metadata: extra info stored alongside (ticket_id, priority, tags, source...)
+
+FLOW:
+data/technical/tickets.json  ─┐
+data/product/tickets.json    ─┤→ load_tickets() → Dict of Documents by type
+data/customer/tickets.json   ─┘
+data/*/tickets.xml           ─┘
+
+SUPPORTED FORMATS:
+- JSON: list of ticket objects with fields like Subject, Body, Answer, tag_1...tag_8
+- XML:  <ticket> elements with child tags like <subject>, <body>, <answer>
+
+TICKET ID FORMAT:
+- JSON tickets:  "{support_type}_{original_id}"      e.g. "technical_T001"
+- XML tickets:   "{support_type}_xml_{original_id}"  e.g. "technical_xml_T001"
+
+ENTRY POINT:
+Call create_documents() to get all tickets ready for the vector store.
+"""
+
 from typing import List, Dict, Any
 from pathlib import Path
 import xml.etree.ElementTree as ET  # built-in Python XML parser
