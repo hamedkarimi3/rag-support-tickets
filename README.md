@@ -1,7 +1,7 @@
 Now let's update the README to reflect the GraphRAG feature. Open `README.md` and replace the entire content with this:
 
 ```markdown
-# 🎫 RAG Support Ticket Search & Assistant
+# 🎫 RAG Support Ticket Search & Assistant 🌐 Live Demo: https://rag-support-tickets.streamlit.app
 
 A production-grade **GraphRAG system** that helps support engineers quickly find relevant tickets and get AI-generated answers. Combines **vector similarity search** (ChromaDB) with **knowledge graph traversal** (Neo4j) for richer, more accurate results than basic RAG.
 
