@@ -26,8 +26,13 @@ import logging
 import os
 from dotenv import load_dotenv, find_dotenv
 
-load_dotenv(find_dotenv())
 
+load_dotenv(find_dotenv())
+try:
+    import streamlit as st
+    _secrets = st.secrets
+except:
+    _secrets = {}
 logger = logging.getLogger(__name__)
 
 
@@ -38,12 +43,11 @@ class SupportGraphStore:
     """
 
     def __init__(self):
-        # Connect to Neo4j
         self.driver = GraphDatabase.driver(
-            os.getenv("NEO4J_URI", "bolt://localhost:7687"),
-            auth=(
-                os.getenv("NEO4J_USERNAME", "neo4j"),
-                os.getenv("NEO4J_PASSWORD", "password123")
+            _secrets.get("NEO4J_URI") or os.getenv("NEO4J_URI", "bolt://localhost:7687"),
+         auth=(
+              _secrets.get("NEO4J_USERNAME") or os.getenv("NEO4J_USERNAME", "neo4j"),
+             _secrets.get("NEO4J_PASSWORD") or os.getenv("NEO4J_PASSWORD", "password123")
             )
         )
         logger.info("Connected to Neo4j")
