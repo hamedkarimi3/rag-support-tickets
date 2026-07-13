@@ -19,7 +19,7 @@ Streamlit reruns the whole script on every interaction.
 We use st.session_state to keep the RAG chain in memory
 so we don't reload it on every search.
 """
-
+from src.graph_store import SupportGraphStore
 import asyncio
 import logging
 import sys
@@ -118,6 +118,20 @@ def load_existing_vector_store() -> Optional[SupportVectorStore]:
         status_placeholder.error(log_error(e))
         return None
 
+def initialize_graph_store(documents) -> Optional[SupportGraphStore]:
+    """Creates and populates the Neo4j knowledge graph."""
+    try:
+        status_placeholder.info("🔗 Connecting to Neo4j...")
+        graph_store = SupportGraphStore()
+        status_placeholder.info("🔗 Building knowledge graph...")
+        graph_store.clear_graph()
+        graph_store.create_graph(documents)
+        status_placeholder.success("✅ Knowledge graph built successfully!")
+        return graph_store
+    except Exception as e:
+        logger.warning(f"Graph store unavailable: {e}")
+        status_placeholder.warning("⚠️ Neo4j not available — running without GraphRAG")
+        return None
 
 def initialize_rag_system() -> Optional[SupportRAGChain]:
     """
@@ -136,7 +150,9 @@ def initialize_rag_system() -> Optional[SupportRAGChain]:
 
         # Initialize RAG chain with the vector store
         status_placeholder.info("🤖 Initializing RAG chain...")
-        rag_chain = SupportRAGChain(vector_store)
+        documents = get_documents()
+        graph_store = initialize_graph_store(documents) if documents else None
+        rag_chain = SupportRAGChain(vector_store, graph_store)
 
         status_placeholder.empty()
         return rag_chain
@@ -221,6 +237,14 @@ def main():
     # Stop if initialization failed
     if not display_system_status():
         return
+
+    # Show graph stats if Neo4j is connected
+    if st.session_state.rag_chain.graph_store:
+        stats = st.session_state.rag_chain.graph_store.get_graph_stats()
+        col1, col2, col3 = st.columns(3)
+        col1.metric("📋 Tickets", stats["tickets"])
+        col2.metric("🏷️ Tags", stats["tags"])
+        col3.metric("🔗 Relations", stats["relations"])
 
     # Optional filter by support type
     support_types = ["All"] + st.session_state.rag_chain.vector_store.get_support_types()

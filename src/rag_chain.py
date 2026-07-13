@@ -1,32 +1,36 @@
 """
-rag_chain.py — RAG Chain (The Brain of the System)
-====================================================
+rag_chain.py — GraphRAG Chain (The Brain of the System)
+========================================================
 
 HOW IT WORKS:
 1. Takes user query and validates it
-2. Searches vector store for most similar tickets
-3. Formats retrieved tickets into a context block
-4. Sends context + query to GPT-4o
-5. Returns GPT-4o's answer to the user
+2. Searches vector store for most similar tickets (semantic search)
+3. Takes those ticket IDs and traverses Neo4j graph for related tickets
+4. Combines both results — vector results + graph results
+5. Formats everything into a rich context block
+6. Sends context + query to GPT-4o
+7. Returns answer to the user
 
 FLOW:
-User Query → validate → similarity_search() → _prepare_context()
-           → GPT-4o (query + context) → answer
+User Query → validate
+    → ChromaDB similarity search (semantic)
+    → Neo4j graph traversal (relational)
+    → combine results
+    → GPT-4o (query + rich context)
+    → answer
 
-WHY RAG:
-Instead of asking GPT-4o from memory, we give it real relevant tickets
-as context — this makes answers more accurate and grounded in real data.
-
-ENTRY POINTS:
-- get_relevant_documents() → just retrieves similar tickets, no LLM
-- query()                  → full RAG: retrieves tickets + generates answer
+WHY GRAPHRAG OVER BASIC RAG:
+Basic RAG: finds tickets similar to query
+GraphRAG:  finds similar tickets PLUS tickets related through shared
+           tags, priorities, and support types — much richer context
 """
 
 from typing import List, Dict, Any
-from langchain_core.prompts import ChatPromptTemplate  # structures the prompt for GPT-4o
-from langchain_openai import ChatOpenAI               # connects to OpenAI GPT-4o
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_openai import ChatOpenAI
 import logging
 from .vector_store import SupportVectorStore
+from .graph_store import SupportGraphStore
 import os
 from dotenv import load_dotenv, find_dotenv
 
@@ -38,26 +42,30 @@ logger = logging.getLogger(__name__)
 
 class SupportRAGChain:
     """
-    Combines vector similarity search with GPT-4o to answer support queries.
-    Retrieves relevant tickets from ChromaDB and uses them as context for the LLM.
+    Combines ChromaDB vector search + Neo4j graph traversal with GPT-4o
+    to answer support queries with maximum context and accuracy.
     """
 
-    def __init__(self, vector_store: SupportVectorStore):
-        # Store reference to vector store for similarity search
+    def __init__(self, vector_store: SupportVectorStore, graph_store: SupportGraphStore = None):
+        # Vector store for semantic similarity search
         self.vector_store = vector_store
 
-        # GPT-4o — used to generate the final answer
+        # Graph store for relationship traversal (optional)
+        self.graph_store = graph_store
+
+        # GPT-4o for generating the final answer
         self.llm = ChatOpenAI(
             model="gpt-4o",
-            temperature=0,      # 0 = consistent, factual answers (no creativity)
+            temperature=0,
             api_key=openai_api
         )
 
-        # Prompt template — tells GPT-4o how to behave and structures the input
-        # {context} = retrieved tickets, {query} = user question
+        # Prompt template — tells GPT-4o how to behave
         self.prompt = ChatPromptTemplate.from_messages([
-            ("system", """You are a helpful support assistant. 
+            ("system", """You are a helpful support assistant.
 Use the following support tickets to answer the user's question.
+Tickets marked as [GRAPH RESULT] were found through knowledge graph traversal
+and may provide additional related context.
 If the context contains relevant tickets, use them to provide a helpful response.
 If no relevant tickets are found, provide general guidance.
 
@@ -73,42 +81,77 @@ Context:
         k: int = 3
     ) -> List[Dict[str, Any]]:
         """
-        Retrieves most similar tickets from vector store.
-        Validates query before searching.
-        Used when you only need tickets, not a GPT-4o answer.
+        GraphRAG retrieval — combines vector search + graph traversal.
+        Step 1: Find similar tickets via ChromaDB
+        Step 2: Expand results via Neo4j graph relationships
+        Step 3: Combine and return unique results
         """
-        # Reject empty queries
+        # Validate query
         if not query or not query.strip():
             raise ValueError("Query cannot be empty")
-
-        # Reject very short queries — not enough context to search
         if len(query.strip()) < 10:
             raise ValueError("Query too short. Please provide more details.")
 
-        return self.vector_store.similarity_search(
+        # Step 1 — Vector similarity search
+        vector_results = self.vector_store.similarity_search(
             query,
             k=k,
             support_type=support_type
         )
 
+        # Step 2 — Graph traversal if graph store available
+        graph_results = []
+        if self.graph_store:
+            # Get IDs of vector results to expand from
+            vector_ids = [
+                doc["metadata"]["ticket_id"]
+                for doc in vector_results
+                if "ticket_id" in doc["metadata"]
+            ]
+
+            # Find related tickets through graph relationships
+            graph_results = self.graph_store.get_related_tickets(vector_ids)
+
+            # Mark graph results so GPT-4o knows their source
+            for doc in graph_results:
+                doc["metadata"]["from_graph"] = True
+
+        # Step 3 — Combine results, vector results first
+        all_results = vector_results + graph_results
+
+        # Remove duplicates by ticket_id
+        seen_ids = set()
+        unique_results = []
+        for doc in all_results:
+            tid = doc["metadata"].get("ticket_id")
+            if tid not in seen_ids:
+                seen_ids.add(tid)
+                unique_results.append(doc)
+
+        return unique_results
+
     def _prepare_context(self, documents: List[Dict[str, Any]]) -> str:
         """
-        Formats retrieved tickets into a clean context block for GPT-4o.
-        Each ticket is numbered and shows its type, tags and content.
+        Formats retrieved tickets into context for GPT-4o.
+        Marks graph results differently so GPT-4o understands their source.
         """
         if not documents:
             return "No relevant support tickets found."
 
         context_parts = []
         for i, doc in enumerate(documents, 1):
+            # Mark if this came from graph traversal
+            source_label = ""
+            if doc["metadata"].get("from_graph"):
+                source_label = " [GRAPH RESULT]"
+
             context_parts.append(
-                f"Ticket {i}:\n"
+                f"Ticket {i}{source_label}:\n"
                 f"Support Type: {doc['metadata'].get('support_type', 'Unknown')}\n"
                 f"Tags: {', '.join(doc['metadata'].get('tags', []))}\n"
                 f"Content: {doc['content']}"
             )
 
-        # Join all tickets with blank line between them
         return "\n\n".join(context_parts)
 
     async def query(
@@ -117,25 +160,25 @@ Context:
         support_type: str = None
     ) -> str:
         """
-        Full RAG pipeline — retrieves tickets and generates an answer.
-        This is the main function called by the Streamlit app.
-
-        async because LLM calls are slow — async lets the app stay responsive.
+        Full GraphRAG pipeline:
+        1. Validate query
+        2. Get relevant docs (vector + graph)
+        3. Prepare context
+        4. Send to GPT-4o
+        5. Return answer
         """
-        # Validate query
         if not query or not query.strip():
             raise ValueError("Query cannot be empty")
         if len(query.strip()) < 10:
             raise ValueError("Query too short. Please provide more details.")
 
-        # Step 1 — find similar tickets
+        # Get combined vector + graph results
         documents = self.get_relevant_documents(query, support_type=support_type)
 
-        # Step 2 — format tickets as context
+        # Format context
         context = self._prepare_context(documents)
 
-        # Step 3 — send to GPT-4o and get answer
-        # prompt | llm is LangChain syntax for chaining components
+        # Send to GPT-4o
         chain = self.prompt | self.llm
         response = await chain.ainvoke({
             "context": context,
