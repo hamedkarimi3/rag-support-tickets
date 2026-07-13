@@ -1,41 +1,31 @@
-version: '3.8'
-
 services:
 
-  # Neo4j Knowledge Graph Database
   neo4j:
     image: neo4j:5.15
     container_name: neo4j-rag
     ports:
-      - "7474:7474"  # Neo4j browser UI
-      - "7687:7687"  # Bolt protocol for Python driver
+      - "7474:7474"
+      - "7687:7687"
     environment:
       - NEO4J_AUTH=neo4j/password123
     volumes:
-      - neo4j_data:/data  # persist graph data between restarts
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7474"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - neo4j_data:/data
 
-  # RAG Support Ticket App
   app:
     build: .
     container_name: rag-app
     ports:
-      - "8501:8501"  # Streamlit UI
+      - "8501:8501"
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_USERNAME=neo4j
       - NEO4J_PASSWORD=password123
     depends_on:
-      neo4j:
-        condition: service_healthy
+      - neo4j
     volumes:
-      - ./data:/app/data          # mount ticket data
-      - ./vector_store:/app/vector_store  # persist vector store
+      - ./data:/app/data
+      - ./vector_store:/app/vector_store
 
 volumes:
   neo4j_data:
