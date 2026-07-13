@@ -32,8 +32,11 @@ import logging
 from dotenv import load_dotenv, find_dotenv
 
 load_dotenv(find_dotenv())
-
-openai_api = os.getenv("OPENAI_API_KEY")
+try:
+    import streamlit as st
+    openai_api = st.secrets.get("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY")
+except:
+    openai_api = os.getenv("OPENAI_API_KEY")
 logger = logging.getLogger(__name__)
 
 
